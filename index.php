@@ -17,15 +17,54 @@
         define('APP_DIR', dirname(__FILE__));
 
         require_once( APP_DIR . '/action/weixin.php');
+        require_once( APP_DIR . '/action/uber.php');
         $appid = 'wx895ed4a1115b7e54';
         $appsecret = 'd4624c36b6795d1d99dcf0547af5443d';
-        $weixin = new weixin( $appid, $appsecret );
+        $weixin = new Weixin( $appid, $appsecret );
+
+        $uber_appid = 'cmLDMkZ4cr9rivGlPd8Z6AQM-gdwiU2t';
+        $uber_appsecret = 'q7ImotFQf1BsgKhsT0STUrq0Vd8IquRSpcoBdS4A';
+
+        $uber = new Uber($uber_appid,$uber_appsecret,'profile');
+
+        if( get('code') && get('state') == 'authorization' ){
+            $uber->oauth();
+            exit;
+        }
+
+        $uber->gotoOAuth();
 
         $jsSDK = $weixin->getJsApiConf();
 
     ?>
 
     <script>
+
+        var UberHackthon = {
+            ajax : function( url, data, callback, method, errorCallback ) {
+                var xhr = new window.XMLHttpRequest;
+                var sdata = data || '' ;
+                xhr.onreadystatechange = function(){
+                    if ( xhr.readyState == 4 ) {
+                        if( xhr.status == 200 ) {
+                            typeof callback == 'function' && callback.call( null, xhr.responseText );
+                        } else if( xhr.status==0 ) {
+                            typeof errorCallback == 'function' && errorCallback.call( null, xhr.responseText );
+                        }
+                    }
+                };
+                xhr.open( method, url, true );
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded;charset=UTF-8');
+                xhr.send( sdata );
+            },
+            get : function( url, callback, errorCallback ) {
+                this.ajax( url, '', callback,"get", errorCallback );
+            },
+            callLoaction : function(data){
+                alert( JSON.stringify(data));
+            }
+        }
+
         wx.config( <?php echo json_encode( $jsSDK ); ?> );
 
         wx.ready(function(){
@@ -46,7 +85,7 @@
             });
             wx.onMenuShareAppMessage({
                 title: '一件呼叫，快捷打车',
-                link: 'http://www.baidu.com',
+                link: window.location.href,
                 imgUrl: 'http://static.uberx.net.cn/web-fresh/vehicles/car-x-1000-800@2x.png',
                 desc: '我在微软亚太研发中心，快过来参加Uber hackthon吧，点击一件呼叫就到',
                 type: 'link',
@@ -56,6 +95,22 @@
                 cancel: function () {
                 }
             });
+
+            wx.getLocation({
+                type: 'wgs84', // 默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
+                success: function (res) {
+                    var latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
+                    var longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
+                    var speed = res.speed; // 速度，以米/每秒计
+                    var accuracy = res.accuracy; // 位置精度
+
+                    alert(JSON.stringify(res));
+
+                    document.write('<scr'+'ipt src="http://api.map.qq.com/rgeoc/?lnglat='+longitude +',' + latitude + '&output=jsonp&fr=mapapi&cb=UberHackthon.callLoaction"></sc' + 'ript>');
+
+                }
+            });
+
         });
 
     </script>

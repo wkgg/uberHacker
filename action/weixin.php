@@ -29,8 +29,8 @@ class Weixin {
         $access_token =  $token['access_token'];
         $jsapi_ticket = $this->getJsApiTicket($access_token);
         $jsapi_ticket = $jsapi_ticket['ticket'];
-        $jsapi_list = array('hideOptionMenu','showMenuItems','onMenuShareTimeline','onMenuShareAppMessage');
-        $jsaip_conf = $this->getJsApiConfParams($jsapi_ticket,$jsapi_list,true);
+        $jsapi_list = array('hideOptionMenu','showMenuItems','onMenuShareTimeline','onMenuShareAppMessage', 'getLocation', 'openLocation');
+        $jsaip_conf = $this->getJsApiConfParams($jsapi_ticket,$jsapi_list,false);
         return $jsaip_conf;
     }
 
